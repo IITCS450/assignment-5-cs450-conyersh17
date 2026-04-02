@@ -1,0 +1,62 @@
+CS450 – Assignment 5: User-Level Threads and Mutex
+
+Overview
+
+    This project implements a cooperative user-level threading library along with a mutex for mutual exclusion. It runs on the MIT xv6-public (x86) environment.
+    The main demonstration program (test_pc.c) simulates a producer-consumer scenario with multiple producers and consumers using a bounded buffer.
+
+Features Implemented
+    User-level threads:
+        thread_init(), thread_create(), thread_yield(), thread_join()
+        Each thread has its own stack and execution context
+        Cooperative scheduling: threads yield control explicitly
+    Mutex:
+        mutex_init(), mutex_lock(), mutex_unlock()
+        Ensures exclusive access to shared resources
+    Producer-consumer demo:
+        Two producers and two consumers
+        Bounded buffer of size 8
+        Correctly produces and consumes 200 items in total
+
+Context Switching Approach
+    Threads are cooperatively scheduled: each thread voluntarily calls thread_yield() to allow others to run.
+    Thread context (registers, stack pointer, instruction pointer) is saved and restored using user-level context switching.
+    ach thread has a private stack allocated at creation.
+
+Test 1 – Producer/Consumer (test_pc.c)
+    Observed Results:
+        Producers generated unique values:
+            Producer 1: 1000 … 1099
+            Producer 2: 2000 … 2099
+    Consumers consumed all items correctly:
+        Consumer 1: 100 … 2049
+        Consumer 2: 1050 … 2099
+    Buffer behavior:
+        Count never exceeds buffer size (N=8)
+        FIFO order is maintained
+    No deadlocks or data corruption observed
+
+Test 2 – Simple Thread Test (result_threads.c)
+    Setup:
+        Create one thread that prints a message
+        Main thread yields and then joins the created thread
+    Observed Output:
+        created thread 0
+        thread 1 running
+        back in main
+        done
+
+Limitations
+    Maximum threads supported: 8 (current implementation; can be increased by adjusting the thread array size)
+    Stack size per thread: fixed
+    Cooperative only: no preemption; threads must yield explicitly
+    Shared address space: all threads share heap and global values
+How to Run
+    Build xv6-public kernel:
+        make clean
+        make
+    Run xv6 in QEMU:
+        make qemu
+    Run the test program inside xv6:
+        $ test_pc
+        $ test_thread
