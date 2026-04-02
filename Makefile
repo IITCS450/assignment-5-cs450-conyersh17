@@ -164,6 +164,25 @@ mkfs: mkfs.c fs.h
 # details:
 # http://www.gnu.org/software/make/manual/html_node/Chained-Rules.html
 .PRECIOUS: %.o
+# Test PC rules
+user/test_thread.o: user/test_thread.c
+	$(CC) $(CFLAGS) -I. -c -o user/test_thread.o user/test_thread.c
+user/test_pc.o: user/test_pc.c
+	$(CC) $(CFLAGS) -I. -c -o user/test_pc.o user/test_pc.c
+uthread.o: uthread.c uthread.h
+	$(CC) $(CFLAGS) -I. -c -o uthread.o uthread.c
+uthread_switch.o: uthread_switch.S
+	$(CC) -m32 -gdwarf-2 -Wa,-divide -c -o uthread_switch.o uthread_switch.S
+
+umutex.o: umutex.c umutex.h
+	$(CC) $(CFLAGS) -I. -c -o umutex.o umutex.c
+_test_thread: user/test_thread.o ulib.o usys.o printf.o umalloc.o uthread.o uthread_switch.o umutex.o
+	$(LD) -m elf_i386 -N -e main -Ttext 0 -o _test_thread user/test_thread.o ulib.o usys.o printf.o umalloc.o uthread.o uthread_switch.o umutex.o
+_test_pc: user/test_pc.o ulib.o usys.o printf.o umalloc.o uthread.o uthread_switch.o umutex.o
+	$(LD) -m elf_i386 -N -e main -Ttext 0 -o _test_pc user/test_pc.o ulib.o usys.o printf.o umalloc.o uthread.o uthread_switch.o umutex.o
+	$(OBJDUMP) -S _test_pc > test_pc.asm
+	$(OBJDUMP) -t _test_pc | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > test_pc.sym
+
 
 UPROGS=\
 	_cat\
@@ -181,7 +200,8 @@ UPROGS=\
 	_usertests\
 	_wc\
 	_zombie\
-
+	_test_pc\
+	_test_thread
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
 
